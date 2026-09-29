@@ -29,7 +29,7 @@ if api_key:
                 with st.spinner("Criando a história..."):
                     try:
                         response = client.models.generate_content(
-                            model="gemini-3.8-flash",
+                            model="gemini-2.5-flash",
                             contents=f"Crie uma História Social simples para uma criança autista de {idade} anos. Situação: {situacao}."
                         )
                         st.success("História Pronta!")
@@ -45,7 +45,7 @@ if api_key:
                 with st.spinner("Adaptando..."):
                     try:
                         response = client.models.generate_content(
-                            model="gemini-3.8-flash",
+                            model="gemini-2.5-flash",
                             contents=f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos e claros: {tarefa}"
                         )
                         st.success("Tarefa Adaptada!")
@@ -61,7 +61,7 @@ if api_key:
                 with st.spinner("Buscando orientações..."):
                     try:
                         response = client.models.generate_content(
-                            model="gemini-3.8-flash",
+                            model="gemini-2.5-flash",
                             contents=f"Forneça orientações imediatas para um responsável lidando com a seguinte crise: {comportamento}"
                         )
                         st.markdown(response.text)
