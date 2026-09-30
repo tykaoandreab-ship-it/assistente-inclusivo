@@ -1,5 +1,6 @@
 import streamlit as st
 from google import genai
+import time
 
 # Configuração da página
 st.set_page_config(page_title="Assistente Inclusivo", page_icon="🧩")
@@ -18,6 +19,26 @@ if not api_key:
 
 # Inicialização do cliente Gemini
 client = genai.Client(api_key=api_key)
+
+# Função robusta para geração de conteúdo com retry e fallback
+def gerar_conteudo_com_seguranca(prompt):
+    modelos = ["gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    
+    for modelo in modelos:
+        for tentativa in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=modelo,
+                    contents=prompt
+                )
+                if response and response.text:
+                    return response.text
+            except Exception as e:
+                # Se for erro de servidor/demanda (503/429), aguarda 2 segundos e tenta novamente
+                time.sleep(2)
+                continue
+                
+    raise Exception("O servidor do Google está momentaneamente sobrecarregado. Por favor, tente novamente em alguns segundos.")
 
 # Seleção da funcionalidade
 opcao = st.selectbox(
@@ -39,12 +60,10 @@ if opcao == "1. Gerar História Social / Rotina (TEA)":
         if situacao:
             with st.spinner("Criando a história..."):
                 try:
-                    response = client.models.generate_content(
-                        model="gemini-3.8-flash",
-                        contents=f"Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
-                    )
+                    prompt = f"Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
+                    texto = gerar_conteudo_com_seguranca(prompt)
                     st.success("História Pronta!")
-                    st.write(response.text)
+                    st.write(texto)
                 except Exception as e:
                     st.error(f"Erro na geração: {e}")
         else:
@@ -59,12 +78,10 @@ elif opcao == "2. Adaptar Tarefa Escolar (TDAH)":
         if tarefa_original:
             with st.spinner("Adaptando..."):
                 try:
-                    response = client.models.generate_content(
-                        model="gemini-3.8-flash",
-                        contents=f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
-                    )
+                    prompt = f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
+                    texto = gerar_conteudo_com_seguranca(prompt)
                     st.success("Tarefa Adaptada!")
-                    st.write(response.text)
+                    st.write(texto)
                 except Exception as e:
                     st.error(f"Erro na geração: {e}")
         else:
@@ -79,12 +96,11 @@ elif opcao == "3. Orientação para Manejo de Crise":
         if crise:
             with st.spinner("Buscando orientações..."):
                 try:
-                    response = client.models.generate_content(
-                        model="gemini-3.8-flash",
-                        contents=f"Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
-                    )
-                    st.markdown(response.text)
+                    prompt = f"Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
+                    texto = gerar_conteudo_com_seguranca(prompt)
+                    st.markdown(texto)
                 except Exception as e:
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
+            
