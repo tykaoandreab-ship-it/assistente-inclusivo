@@ -16,7 +16,7 @@ if not api_key:
     st.warning("👈 Insira sua chave de API na barra lateral para começar.")
     st.stop()
 
-# Inicialização do cliente Gemini
+# Inicialização do cliente Gemini com a chave informada
 client = genai.Client(api_key=api_key)
 
 # Seleção da funcionalidade
@@ -40,7 +40,7 @@ if opcao == "1. Gerar História Social / Rotina (TEA)":
             with st.spinner("Criando a história..."):
                 try:
                     response = client.models.generate_content(
-                        model="gemini-1.5-flash",
+                        model="gemini-2.5-flash",
                         contents=f"Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
                     )
                     st.success("História Pronta!")
@@ -60,7 +60,7 @@ elif opcao == "2. Adaptar Tarefa Escolar (TDAH)":
             with st.spinner("Adaptando..."):
                 try:
                     response = client.models.generate_content(
-                        model="gemini-1.5-flash",
+                        model="gemini-2.5-flash",
                         contents=f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
                     )
                     st.success("Tarefa Adaptada!")
@@ -80,7 +80,7 @@ elif opcao == "3. Orientação para Manejo de Crise":
             with st.spinner("Buscando orientações..."):
                 try:
                     response = client.models.generate_content(
-                        model="gemini-1.5-flash",
+                        model="gemini-2.5-flash",
                         contents=f"Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
                     )
                     st.markdown(response.text)
