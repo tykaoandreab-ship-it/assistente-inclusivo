@@ -27,7 +27,8 @@ client = Groq(api_key=api_key_groq)
 def gerar_resposta(prompt):
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
+        
     )
     return chat_completion.choices[0].message.content
 
