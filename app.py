@@ -25,9 +25,25 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
+    # Busca dinamicamente os modelos ativos disponíveis na sua conta
+    lista_modelos = client.models.list()
+    
+    # Prioriza o llama-3.3-70b-versatile ou pega o primeiro da lista
+    modelo_escolhido = None
+    for m in lista_modelos.data:
+        if "llama-3.3" in m.id or "llama-3.1" in m.id:
+            modelo_escolhido = m.id
+            break
+            
+    if not modelo_escolhido and len(lista_modelos.data) > 0:
+        modelo_escolhido = lista_modelos.data[0].id
+
+    if not modelo_escolhido:
+        raise Exception("Nenhum modelo disponível encontrado na conta da Groq.")
+
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama-3.3-70b-versatile",
+        model=modelo_escolhido,
     )
     return chat_completion.choices[0].message.content
 
@@ -94,3 +110,4 @@ elif opcao == "3. Orientação para Manejo de Crise":
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
+            
