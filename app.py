@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+from groq import Groq
 
 # Configuração da página
 st.set_page_config(page_title="Assistente Inclusivo", page_icon="🧩")
@@ -9,44 +9,27 @@ st.caption("Ferramenta de suporte pedagógico e organizacional.")
 
 st.info("💡 **Nota:** Esta ferramenta oferece suporte pedagógico e organizacional. Não substitui diagnósticos ou tratamentos médicos.")
 
-# Barra lateral para chaves
+# Barra lateral para chave
 st.sidebar.header("Configuração de Acesso")
-api_key_gemini = st.sidebar.text_input("Cole sua API Key do Gemini (Opcional):", type="password")
-api_key_groq = st.sidebar.text_input("Cole sua API Key do Groq:", type="password", value="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")
+api_key_groq = st.sidebar.text_input(
+    "API Key do Groq:", 
+    type="password", 
+    value="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"
+)
 
-if not api_key_gemini and not api_key_groq:
-    st.warning("👈 Insira pelo menos uma chave de API na barra lateral para começar.")
+if not api_key_groq:
+    st.warning("👈 Insira a chave da API na barra lateral para começar.")
     st.stop()
 
-# Função de geração com contingência automática
+# Inicialização do cliente Groq
+client = Groq(api_key=api_key_groq)
+
 def gerar_resposta(prompt):
-    # 1. Tenta via Groq (Llama 3.3) - Ultrarrápido e sem erros de sobrecarga
-    if api_key_groq:
-        try:
-            from groq import Groq
-            client_groq = Groq(api_key=api_key_groq)
-            chat_completion = client_groq.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model="llama-3.3-70b-versatile",
-            )
-            return chat_completion.choices[0].message.content
-        except Exception as e:
-            pass
-
-    # 2. Contingência via Google Gemini
-    if api_key_gemini:
-        try:
-            client = genai.Client(api_key=api_key_gemini)
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-            if response and response.text:
-                return response.text
-        except Exception as e:
-            pass
-
-    raise Exception("Não foi possível gerar a resposta no momento. Tente novamente em alguns instantes.")
+    chat_completion = client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.3-70b-versatile",
+    )
+    return chat_completion.choices[0].message.content
 
 # Seleção da funcionalidade
 opcao = st.selectbox(
@@ -111,3 +94,4 @@ elif opcao == "3. Orientação para Manejo de Crise":
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
+            
