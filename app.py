@@ -25,10 +25,8 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    # Busca dinamicamente os modelos ativos disponíveis na sua conta
     lista_modelos = client.models.list()
     
-    # Prioriza o llama-3.3-70b-versatile ou pega o primeiro da lista
     modelo_escolhido = None
     for m in lista_modelos.data:
         if "llama-3.3" in m.id or "llama-3.1" in m.id:
@@ -37,9 +35,6 @@ def gerar_resposta(prompt):
             
     if not modelo_escolhido and len(lista_modelos.data) > 0:
         modelo_escolhido = lista_modelos.data[0].id
-
-    if not modelo_escolhido:
-        raise Exception("Nenhum modelo disponível encontrado na conta da Groq.")
 
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
@@ -67,7 +62,7 @@ if opcao == "1. Gerar História Social / Rotina (TEA)":
         if situacao:
             with st.spinner("Criando a história..."):
                 try:
-                    prompt = f"Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
+                    prompt = f"Responda obrigatoriamente em português do Brasil. Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
                     texto = gerar_resposta(prompt)
                     st.success("História Pronta!")
                     st.write(texto)
@@ -85,7 +80,7 @@ elif opcao == "2. Adaptar Tarefa Escolar (TDAH)":
         if tarefa_original:
             with st.spinner("Adaptando..."):
                 try:
-                    prompt = f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
+                    prompt = f"Responda obrigatoriamente em português do Brasil. Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
                     texto = gerar_resposta(prompt)
                     st.success("Tarefa Adaptada!")
                     st.write(texto)
@@ -103,7 +98,7 @@ elif opcao == "3. Orientação para Manejo de Crise":
         if crise:
             with st.spinner("Buscando orientações..."):
                 try:
-                    prompt = f"Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
+                    prompt = f"Responda obrigatoriamente em português do Brasil. Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
                     texto = gerar_resposta(prompt)
                     st.markdown(texto)
                 except Exception as e:
