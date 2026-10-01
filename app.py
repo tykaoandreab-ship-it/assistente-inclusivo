@@ -1,6 +1,5 @@
 import streamlit as st
 from google import genai
-import time
 
 # Configuração da página
 st.set_page_config(page_title="Assistente Inclusivo", page_icon="🧩")
@@ -10,35 +9,44 @@ st.caption("Ferramenta de suporte pedagógico e organizacional.")
 
 st.info("💡 **Nota:** Esta ferramenta oferece suporte pedagógico e organizacional. Não substitui diagnósticos ou tratamentos médicos.")
 
-# Barra lateral para inserir a API Key
-api_key = st.sidebar.text_input("Cole sua API Key do Google AI Studio:", type="password")
+# Barra lateral para chaves
+st.sidebar.header("Configuração de Acesso")
+api_key_gemini = st.sidebar.text_input("Cole sua API Key do Gemini (Opcional):", type="password")
+api_key_groq = st.sidebar.text_input("Cole sua API Key do Groq:", type="password", value="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")
 
-if not api_key:
-    st.warning("👈 Insira sua chave de API na barra lateral para começar.")
+if not api_key_gemini and not api_key_groq:
+    st.warning("👈 Insira pelo menos uma chave de API na barra lateral para começar.")
     st.stop()
 
-# Inicialização do cliente Gemini
-client = genai.Client(api_key=api_key)
+# Função de geração com contingência automática
+def gerar_resposta(prompt):
+    # 1. Tenta via Groq (Llama 3.3) - Ultrarrápido e sem erros de sobrecarga
+    if api_key_groq:
+        try:
+            from groq import Groq
+            client_groq = Groq(api_key=api_key_groq)
+            chat_completion = client_groq.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.3-70b-versatile",
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            pass
 
-# Função robusta para geração de conteúdo com retry e fallback
-def gerar_conteudo_com_seguranca(prompt):
-    modelos = ["gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
-    
-    for modelo in modelos:
-        for tentativa in range(3):
-            try:
-                response = client.models.generate_content(
-                    model=modelo,
-                    contents=prompt
-                )
-                if response and response.text:
-                    return response.text
-            except Exception as e:
-                # Se for erro de servidor/demanda (503/429), aguarda 2 segundos e tenta novamente
-                time.sleep(2)
-                continue
-                
-    raise Exception("O servidor do Google está momentaneamente sobrecarregado. Por favor, tente novamente em alguns segundos.")
+    # 2. Contingência via Google Gemini
+    if api_key_gemini:
+        try:
+            client = genai.Client(api_key=api_key_gemini)
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            if response and response.text:
+                return response.text
+        except Exception as e:
+            pass
+
+    raise Exception("Não foi possível gerar a resposta no momento. Tente novamente em alguns instantes.")
 
 # Seleção da funcionalidade
 opcao = st.selectbox(
@@ -61,7 +69,7 @@ if opcao == "1. Gerar História Social / Rotina (TEA)":
             with st.spinner("Criando a história..."):
                 try:
                     prompt = f"Crie uma História Social simples para uma criança de {idade} anos sobre a seguinte situação: {situacao}. Use linguagem clara, frases curtas e tom acolhedor."
-                    texto = gerar_conteudo_com_seguranca(prompt)
+                    texto = gerar_resposta(prompt)
                     st.success("História Pronta!")
                     st.write(texto)
                 except Exception as e:
@@ -79,7 +87,7 @@ elif opcao == "2. Adaptar Tarefa Escolar (TDAH)":
             with st.spinner("Adaptando..."):
                 try:
                     prompt = f"Adapte esta tarefa para uma criança com TDAH, dividindo em passos curtos, destacando palavras-chave e eliminando distrações:\n\n{tarefa_original}"
-                    texto = gerar_conteudo_com_seguranca(prompt)
+                    texto = gerar_resposta(prompt)
                     st.success("Tarefa Adaptada!")
                     st.write(texto)
                 except Exception as e:
@@ -97,10 +105,9 @@ elif opcao == "3. Orientação para Manejo de Crise":
             with st.spinner("Buscando orientações..."):
                 try:
                     prompt = f"Forneça orientações imediatas para um responsável ou professor lidar com esta situação de crise sensorial/comportamental: {crise}. Responda em tópicos curtos e diretos."
-                    texto = gerar_conteudo_com_seguranca(prompt)
+                    texto = gerar_resposta(prompt)
                     st.markdown(texto)
                 except Exception as e:
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
-            
