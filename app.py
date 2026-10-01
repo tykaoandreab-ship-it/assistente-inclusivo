@@ -4,13 +4,62 @@ from groq import Groq
 # Configuração da página
 st.set_page_config(page_title="Assistente Inclusivo", page_icon="🧩")
 
-st.title("🧩 Assistente de Apoio Inclusivo (TEA & TDAH)")
-st.caption("Ferramenta de suporte pedagógico e organizacional.")
+# ==========================================
+# 1. SISTEMA DE CONTROLE DE ACESSO E SENHAS
+# ==========================================
+# Lista de senhas autorizadas (Pode adicionar novas senhas para cada cliente/escola)
+SENHAS_VALIDAS = {
+    "demo2026": "Acesso Demonstração",
+    "piratininga2026": "Prefeitura de Piratininga",
+    "escola123": "Escola Municipal"
+}
 
+# Inicialização do estado de autenticação
+if "autenticado" not in st.session_state:
+    st.session_state["autenticado"] = False
+
+def verificar_senha():
+    senha_digitada = st.session_state.get("campo_senha", "")
+    if senha_digitada in SENHAS_VALIDAS:
+        st.session_state["autenticado"] = True
+        st.session_state["cliente_nome"] = SENHAS_VALIDAS[senha_digitada]
+    else:
+        st.error("🔒 Senha incorreta ou acesso não autorizado.")
+
+# Tela de Login caso o usuário não esteja autenticado
+if not st.session_state["autenticado"]:
+    st.title("🔒 Acesso Restrito - Assistente Inclusivo")
+    st.caption("Plataforma licenciada para redes de ensino e instituições autorizadas.")
+    st.info("Insira a sua senha de acesso corporativa para entrar no sistema.")
+    
+    st.text_input(
+        "Senha de Acesso:", 
+        type="password", 
+        key="campo_senha", 
+        on_change=verificar_senha
+    )
+    st.button("Entrar no Sistema", on_click=verificar_senha)
+    st.stop()  # Interrompe o carregamento do restante da aplicação até que a senha seja validada
+
+# ==========================================
+# 2. APLICAÇÃO PRINCIPAL (APÓS LOGIN)
+# ==========================================
+
+# Barra superior com o status de login
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.title("🧩 Assistente de Apoio Inclusivo (TEA & TDAH)")
+with col2:
+    st.caption(f"🔑 **Licenciado para:**\n{st.session_state.get('cliente_nome')}")
+    if st.button("Sair / Bloquear"):
+        st.session_state["autenticado"] = False
+        st.rerun()
+
+st.caption("Ferramenta de suporte pedagógico e organizacional.")
 st.info("💡 **Nota:** Esta ferramenta oferece suporte pedagógico e organizacional. Não substitui diagnósticos ou tratamentos médicos.")
 
-# Barra lateral para chave
-st.sidebar.header("Configuração de Acesso")
+# Configuração da chave da API na barra lateral
+st.sidebar.header("Configuração do Sistema")
 api_key_groq = st.sidebar.text_input(
     "API Key do Groq:", 
     type="password", 
@@ -105,4 +154,3 @@ elif opcao == "3. Orientação para Manejo de Crise":
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
-            
