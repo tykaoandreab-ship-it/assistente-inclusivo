@@ -68,25 +68,25 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    lista_modelos = client.models.list()
+    # Lista de modelos seguros de texto (prioriza o llama-3.3 de 70b)
+    modelos_texto = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama3-8b-8192"
+    ]
     
-    # Filtra rigorosamente apenas modelos de texto Llama (ignorando Whisper e modelos de áudio)
-    modelo_escolhido = None
-    for m in lista_modelos.data:
-        m_id = m.id.lower()
-        if ("llama" in m_id) and ("whisper" not in m_id) and ("vision" not in m_id):
-            modelo_escolhido = m.id
-            break
+    for mod in modelos_texto:
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=mod,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception:
+            continue
             
-    # Caso não encontre na busca dinâmica, utiliza o modelo de texto padrão ativo na Groq
-    if not modelo_escolhido:
-        modelo_escolhido = "llama-3.3-70b-versatile"
-
-    chat_completion = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model=modelo_escolhido,
-    )
-    return chat_completion.choices[0].message.content
+    raise Exception("Não foi possível conectar aos modelos de texto da Groq.")
 
 opcao = st.selectbox(
     "Selecione o tipo de ajuda:",
@@ -147,4 +147,3 @@ elif opcao == "3. Orientação para Manejo de Crise":
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
-    
