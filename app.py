@@ -71,9 +71,30 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
+    # Busca dinamicamente os modelos disponíveis na conta
+    lista_modelos = client.models.list()
+    
+    # Filtra modelos de texto da família Llama, ignorando Whisper/Áudio/Visão
+    modelo_escolhido = None
+    for m in lista_modelos.data:
+        m_id = m.id.lower()
+        if ("llama" in m_id) and ("whisper" not in m_id) and ("vision" not in m_id):
+            modelo_escolhido = m.id
+            break
+            
+    # Se não encontrar Llama, seleciona o primeiro modelo de texto disponível
+    if not modelo_escolhido and len(lista_modelos.data) > 0:
+        for m in lista_modelos.data:
+            if "whisper" not in m.id.lower():
+                modelo_escolhido = m.id
+                break
+
+    if not modelo_escolhido:
+        raise Exception("Nenhum modelo de texto disponível foi encontrado na conta Groq.")
+
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama-3.3-70b-versatile",
+        model=modelo_escolhido,
     )
     return chat_completion.choices[0].message.content
 
@@ -136,3 +157,4 @@ elif opcao == "3. Orientação para Manejo de Crise":
                     st.error(f"Erro na geração: {e}")
         else:
             st.warning("Por favor, descreva o que está acontecendo.")
+            
