@@ -55,10 +55,13 @@ st.caption("Ferramenta de suporte pedagógico e organizacional.")
 st.info("💡 **Nota:** Esta ferramenta oferece suporte pedagógico e organizacional. Não substitui diagnósticos ou tratamentos médicos.")
 
 st.sidebar.header("Configuração do Sistema")
+
+CHAVE_PADRAO = "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"
+
 api_key_groq = st.sidebar.text_input(
     "API Key do Groq:", 
     type="password", 
-    value="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"
+    value=CHAVE_PADRAO
 )
 
 if not api_key_groq:
@@ -68,25 +71,11 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    # Lista de modelos seguros de texto (prioriza o llama-3.3 de 70b)
-    modelos_texto = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama3-70b-8192",
-        "llama3-8b-8192"
-    ]
-    
-    for mod in modelos_texto:
-        try:
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=mod,
-            )
-            return chat_completion.choices[0].message.content
-        except Exception:
-            continue
-            
-    raise Exception("Não foi possível conectar aos modelos de texto da Groq.")
+    chat_completion = client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.3-70b-versatile",
+    )
+    return chat_completion.choices[0].message.content
 
 opcao = st.selectbox(
     "Selecione o tipo de ajuda:",
