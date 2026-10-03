@@ -71,12 +71,10 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    # Lista fixa de modelos de geração de texto em ordem de prioridade
+    # Lista atualizada apenas com modelos ativos e suportados na Groq
     modelos_texto = [
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama3-70b-8192",
-        "llama3-8b-8192"
+        "llama-3.1-8b-instant"
     ]
     
     ultimo_erro = None
