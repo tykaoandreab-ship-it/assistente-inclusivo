@@ -71,25 +71,40 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    # Lista atualizada apenas com modelos ativos e suportados na Groq
-    modelos_texto = [
+    # Lista de prioridade de modelos de texto ativos na Groq
+    modelos_prioritarios = [
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant"
+        "llama-3.2-11b-vision-instruct",
+        "llama-3.2-3b-preview",
+        "llama-3.2-1b-preview"
     ]
     
-    ultimo_erro = None
-    for mod in modelos_texto:
+    # 1. Tenta executar com a lista prioritária
+    for mod in modelos_prioritarios:
         try:
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=mod,
             )
             return chat_completion.choices[0].message.content
-        except Exception as e:
-            ultimo_erro = e
+        except Exception:
             continue
+
+    # 2. Se a lista falhar, busca dinamicamente os modelos disponíveis e seleciona o primeiro de texto
+    try:
+        lista_modelos = client.models.list()
+        for m in lista_modelos.data:
+            m_id = m.id.lower()
+            if ("llama" in m_id) and ("whisper" not in m_id) and ("embedding" not in m_id):
+                chat_completion = client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=m.id,
+                )
+                return chat_completion.choices[0].message.content
+    except Exception as e:
+        raise Exception(f"Erro ao conectar com os modelos da Groq: {e}")
             
-    raise Exception(f"Erro ao conectar com a API: {ultimo_erro}")
+    raise Exception("Nenhum modelo de texto compatível foi encontrado.")
 
 opcao = st.selectbox(
     "Selecione o tipo de ajuda:",
