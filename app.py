@@ -71,32 +71,27 @@ if not api_key_groq:
 client = Groq(api_key=api_key_groq)
 
 def gerar_resposta(prompt):
-    # Busca dinamicamente os modelos disponíveis na conta
-    lista_modelos = client.models.list()
+    # Lista fixa de modelos de geração de texto em ordem de prioridade
+    modelos_texto = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama3-8b-8192"
+    ]
     
-    # Filtra modelos de texto da família Llama, ignorando Whisper/Áudio/Visão
-    modelo_escolhido = None
-    for m in lista_modelos.data:
-        m_id = m.id.lower()
-        if ("llama" in m_id) and ("whisper" not in m_id) and ("vision" not in m_id):
-            modelo_escolhido = m.id
-            break
+    ultimo_erro = None
+    for mod in modelos_texto:
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=mod,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            ultimo_erro = e
+            continue
             
-    # Se não encontrar Llama, seleciona o primeiro modelo de texto disponível
-    if not modelo_escolhido and len(lista_modelos.data) > 0:
-        for m in lista_modelos.data:
-            if "whisper" not in m.id.lower():
-                modelo_escolhido = m.id
-                break
-
-    if not modelo_escolhido:
-        raise Exception("Nenhum modelo de texto disponível foi encontrado na conta Groq.")
-
-    chat_completion = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model=modelo_escolhido,
-    )
-    return chat_completion.choices[0].message.content
+    raise Exception(f"Erro ao conectar com a API: {ultimo_erro}")
 
 opcao = st.selectbox(
     "Selecione o tipo de ajuda:",
